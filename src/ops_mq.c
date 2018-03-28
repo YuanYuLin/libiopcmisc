@@ -42,8 +42,9 @@ static int destroy(uint8_t * id)
 	return 0;
 }
 
-static int get(mqd_t mqd, struct queue_msg_t* msg)
+static int get_qmsg(mqd_t mqd, struct queue_msg_t* msg)
 {
+	struct ops_log_t* log = get_log_instance();
     struct mq_attr attr;
     ssize_t msg_size = 0;
     char *ptr = (char*)msg;
@@ -59,8 +60,27 @@ static int get(mqd_t mqd, struct queue_msg_t* msg)
 
     return msg_size;
 }
+#if 0
+static int get_syscmd(mqd_t mqd, struct syscmd_msg_t* msg)
+{
+	struct ops_log_t* log = get_log_instance();
+    struct mq_attr attr;
+    ssize_t msg_size = 0;
+    char *ptr = (char*)msg;
 
-static int set(mqd_t mqd, struct queue_msg_t* msg)
+    mq_getattr(mqd, &attr);
+    memset(msg, 0, sizeof(struct syscmd_msg_t));
+
+    msg_size = mq_receive(mqd, ptr, attr.mq_msgsize, NULL);
+    if(msg_size < 0) {
+        log->error(0x01, "MQ_RCV:%d:%ld\n", errno, attr.mq_msgsize);
+        return 0;
+    }
+
+    return msg_size;
+}
+#endif
+static int set_qmsg(mqd_t mqd, struct queue_msg_t* msg)
 {
     //uint32_t size = sizeof(struct msg_hdr_t) + msg->hdr.data_size;
     uint32_t size = sizeof(struct queue_msg_t) - MAX_MSG_DATA_SIZE + msg->msg.data_size;
@@ -69,7 +89,17 @@ static int set(mqd_t mqd, struct queue_msg_t* msg)
     ret = mq_send(mqd, (const char*)msg, size, 0);
     return ret;
 }
+#if 0
+static int set_syscmd(mqd_t mqd, struct syscmd_msg_t* msg)
+{
+    //uint32_t size = sizeof(struct msg_hdr_t) + msg->hdr.data_size;
+    uint32_t size = sizeof(struct syscmd_msg_t) - ARGV_LEN + strlen(msg->param);
+    int ret = 0;
 
+    ret = mq_send(mqd, (const char*)msg, size, 0);
+    return ret;
+}
+#endif
 static void init()
 {
     //mqd_list[i] = create(id);
@@ -80,83 +110,31 @@ static void show_all()
 }
 
 static int get_from(uint8_t * id, struct queue_msg_t *msg)
+//static int get_from(uint8_t * id, void *msg)
 {
 	int ret = 0;
 	mqd_t mqd = create(id);
-	ret = get(mqd, msg);
+	//if(strcmp(id, QUEUE_NAME_SYSCMD) == 0) {
+	//	ret = get_syscmd(mqd, msg);
+	//} else {
+	    ret = get_qmsg(mqd, msg);
+	//}
 	mq_close(mqd);
 	return ret;
 }
 
 static int set_to(uint8_t * id, struct queue_msg_t *msg)
+//static int set_to(uint8_t * id, void *msg)
 {
 	int ret = 0;
 	mqd_t mqd = create(id);
-	ret = set(mqd, msg);
+	//if(strcmp(id, QUEUE_NAME_SYSCMD) == 0) {
+	//	ret = set_syscmd(mqd, msg);
+	//} else {
+		ret = set_qmsg(mqd, msg);
+	//}
 	mq_close(mqd);
 	return ret;
-}
-
-
-static json_reader_t* create_reader(uint8_t* json_str)
-{
-	json_reader_t* jobj = json_tokener_parse(json_str);
-	return jobj;
-}
-
-static uint8_t* get_string(json_reader_t* _reader, uint8_t* key, uint8_t* defval)
-{
-	struct json_object* reader = (struct json_object*)_reader;
-	uint8_t* val = NULL;
-	struct json_object* jobj_val = NULL;
-	if(json_object_object_get_ex(reader, key, &jobj_val)) {
-		val = (uint8_t*)json_object_get_string(jobj_val);
-	} else {
-		val = defval;
-	}
-	return val;
-}
-
-static int get_int(json_reader_t* _reader, uint8_t* key, int defval)
-{
-	struct json_object* reader = (struct json_object*)_reader;
-	int val = 0;
-	struct json_object* jobj_val;
-	if(json_object_object_get_ex(reader, key, &jobj_val)) {
-		val = (int)json_object_get_int(jobj_val);
-	} else {
-		val = defval;
-	}
-	return val;
-}
-
-static json_writer_t* create_writer()
-{
-	json_writer_t* jobj = json_object_new_object();
-	return jobj;
-}
-
-static void set_string(json_writer_t* _writer, uint8_t* key, uint8_t* val)
-{
-	struct json_object* writer = (struct json_object*)_writer;
-	json_object_object_add(writer, key, json_object_new_string(val));
-}
-
-static void set_int(json_writer_t* _writer, uint8_t* key, int val)
-{
-	struct json_object* writer = (struct json_object*)_writer;
-	json_object_object_add(writer, key, json_object_new_int(val));
-}
-
-static uint32_t to_bytes(json_writer_t* _writer, uint8_t* data)
-{
-	struct json_object* writer = (struct json_object*)_writer;
-	uint8_t* ptr = NULL;
-	uint32_t ptr_len = 0;
-	ptr = (uint8_t*)json_object_to_json_string(writer);
-	ptr_len = strlen(ptr);
-	memcpy(data, ptr, ptr_len);
-	return ptr_len;
 }
 
 static struct ops_mq_t *obj = NULL;
@@ -170,14 +148,6 @@ struct ops_mq_t *get_mq_instance()
 		obj->get_from = get_from;
 		obj->set_to = set_to;
 		obj->destroy = destroy;
-		obj->create_json_reader = create_reader;
-		obj->get_json_string = get_string;
-		obj->get_json_int = get_int;
-		obj->create_json_writer = create_writer;
-		obj->set_json_string = set_string;
-		obj->set_json_int = set_int;
-		obj->out_json_to_bytes = to_bytes;
-
 	}
 	return obj;
 }

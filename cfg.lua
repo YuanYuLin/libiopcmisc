@@ -6,7 +6,7 @@ end
 
 function get_cfg(key)
   if key == "dbtype" then
-	  return "bdb"
+	  return "2"
   end
   if key == "dbpath" then
 	  return "/tmp/db.db"

@@ -18,5 +18,6 @@ SRC += ops_misc.c
 SRC += ops_dbutil.c
 SRC += ops_log.c
 SRC += ops_mq.c
+SRC += ops_json.c
 
 include Makefile.include.lib

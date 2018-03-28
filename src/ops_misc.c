@@ -3,9 +3,15 @@
 #include <lualib.h>
 
 #include <syslog.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <net/if.h>
+#include <arpa/inet.h>
 
 #include "ops_misc.h"
 #include "ops_mq.h"
+#include "ops_log.h"
 
 static void init(void)
 {
@@ -91,6 +97,65 @@ static int get_logmask(uint8_t * val)
 	return ret;
 }
 
+static int syscmd(uint8_t* cmd)
+{
+    struct ops_log_t* log = get_log_instance();
+    log->debug(0x01, "syscmd : %s\n", cmd);
+    system(cmd);
+    return 0;
+}
+
+static uint8_t get_macaddress_by_interface(uint8_t* interface, uint8_t* mac_address)
+{
+#define MAC_LEN	6
+	struct ifreq ifr;
+	int success = 0;
+	int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+	
+	if (sock < 0) {
+		return 0;
+	};
+
+	ifr.ifr_addr.sa_family = AF_INET;
+	strncpy(ifr.ifr_name, interface, strlen(interface));
+
+	if (ioctl(sock, SIOCGIFHWADDR, &ifr) == 0) {
+		success = 1;
+	}
+
+	if (success) {
+		memcpy(mac_address, ifr.ifr_hwaddr.sa_data, MAC_LEN);
+		return MAC_LEN;
+	}
+	return 0;
+}
+
+static uint8_t get_ipaddress_by_interface(uint8_t* interface, uint8_t* ip_address)
+{
+	struct ifreq ifr;
+	int success = 0;
+	int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+	uint8_t* ptr = NULL;
+	
+	if (sock < 0) {
+		return 0;
+	};
+
+	ifr.ifr_addr.sa_family = AF_INET;
+	strncpy(ifr.ifr_name, interface, strlen(interface));
+
+	if (ioctl(sock, SIOCGIFADDR, &ifr) == 0) {
+		success = 1;
+	}
+
+	if (success) {
+		ptr = inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
+		memcpy(ip_address, ptr, strlen(ptr));
+		return strlen(ptr);
+	}
+	return 0;
+}
+
 static struct ops_misc_t *obj;
 struct ops_misc_t *get_misc_instance()
 {
@@ -101,6 +166,9 @@ struct ops_misc_t *get_misc_instance()
 		obj->get_dbpath = get_dbpath;
 		obj->get_dbtype = get_dbtype;
 		obj->get_logmask = get_logmask;
+		obj->syscmd = syscmd;
+		obj->get_macaddress_by_interface = get_macaddress_by_interface;
+		obj->get_ipaddress_by_interface = get_ipaddress_by_interface;
 	}
 
 	return obj;

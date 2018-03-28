@@ -89,7 +89,7 @@ static void loginfo(uint8_t mask, const char *fmt, ...)
 	if (log_mask & mask) {
 		memset(&buf, 0, LOG_STR_LEN);
 		va_start(arg, fmt);
-		vsprintf(buf, fmt, arg);
+		vsnprintf(buf, LOG_STR_LEN, fmt, arg);
 		va_end(arg);
 		_log(LOG_INFO, buf);
 	}
@@ -106,7 +106,7 @@ static void logdebug(uint8_t mask, const char *fmt, ...)
 	if (log_mask & mask) {
 		memset(&buf, 0, LOG_STR_LEN);
 		va_start(arg, fmt);
-		vsprintf(buf, fmt, arg);
+		vsnprintf(buf, LOG_STR_LEN, fmt, arg);
 		va_end(arg);
 		_log(LOG_DEBUG, buf);
 	}
@@ -123,7 +123,7 @@ static void logerror(uint8_t mask, const char *fmt, ...)
 	if (log_mask & mask) {
 		memset(&buf, 0, LOG_STR_LEN);
 		va_start(arg, fmt);
-		vsprintf(buf, fmt, arg);
+		vsnprintf(buf, LOG_STR_LEN, fmt, arg);
 		va_end(arg);
 		_log(LOG_ERR, buf);
 	}

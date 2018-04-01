@@ -20,7 +20,7 @@ static void init(void)
 static void show_all(void)
 {
 }
-#if 0
+
 static void foo(lua_State * L, char *msg)
 {
 	fprintf(stderr, "\nFATAL ERROR:\n %s: %s\n\n", msg,
@@ -81,21 +81,19 @@ static int get_dbtype(uint32_t * val)
 	}
 	return ret;
 }
-#endif
+
 static int get_logmask(uint8_t * val)
 {
-//#define LOG_MASK_STR_LEN	4
-//	uint8_t str[LOG_MASK_STR_LEN] = { 0 };
+#define LOG_MASK_STR_LEN	4
+	uint8_t str[LOG_MASK_STR_LEN] = { 0 };
 	int ret = 0;
-//	memset(&str[0], 0, LOG_MASK_STR_LEN);
-//	ret = get_cfg("logmask", &str[0]);
-//	if (ret < 0) {
-//		*val = 0;
-//	} else {
-//		*val = (uint8_t) strtoul(&str[0], NULL, 16);
-//	}
-
-	*val = 0xFF;
+	memset(&str[0], 0, LOG_MASK_STR_LEN);
+	ret = get_cfg("logmask", &str[0]);
+	if (ret < 0) {
+		*val = 0;
+	} else {
+		*val = (uint8_t) strtoul(&str[0], NULL, 16);
+	}
 	return ret;
 }
 
@@ -165,8 +163,8 @@ struct ops_misc_t *get_misc_instance()
 		obj = malloc(sizeof(struct ops_misc_t));
 		obj->init = init;
 		obj->show_all = show_all;
-		//obj->get_dbpath = get_dbpath;
-		//obj->get_dbtype = get_dbtype;
+		obj->get_dbpath = get_dbpath;
+		obj->get_dbtype = get_dbtype;
 		obj->get_logmask = get_logmask;
 		obj->syscmd = syscmd;
 		obj->get_macaddress_by_interface = get_macaddress_by_interface;

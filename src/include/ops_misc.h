@@ -11,8 +11,8 @@
 struct ops_misc_t {
 	void (*init) (void);
 	void (*show_all) (void);
-	int (*get_dbpath) (uint8_t * val);
-	int (*get_dbtype) (uint32_t * val);
+	//int (*get_dbpath) (uint8_t * val);
+	//int (*get_dbtype) (uint32_t * val);
 	int (*get_logmask) (uint8_t * val);
 	int (*syscmd)(uint8_t* cmd);
 	uint8_t (*get_macaddress_by_interface)(uint8_t* interface, uint8_t* mac_address);

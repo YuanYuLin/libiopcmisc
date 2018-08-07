@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdint.h>
+#include <sys/stat.h>
 
 struct ops_misc_t {
 	void (*init) (void);
@@ -17,6 +18,7 @@ struct ops_misc_t {
 	int (*syscmd)(uint8_t* cmd);
 	uint8_t (*get_macaddress_by_interface)(uint8_t* interface, uint8_t* mac_address);
 	uint8_t (*get_ipaddress_by_interface)(uint8_t* interface, uint8_t* ip_address);
+	uint8_t (*is_file_exist)(uint8_t *path);
 };
 
 #define CMDLEN		0xff

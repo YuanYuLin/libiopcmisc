@@ -158,6 +158,16 @@ static uint8_t get_ipaddress_by_interface(uint8_t* interface, uint8_t* ip_addres
 	return 0;
 }
 
+static uint8_t is_exist(uint8_t* path)
+{
+    struct stat st;
+    if(stat(path, &st) != 0) {
+        printf("[%s] is not exist\n", path);
+        return 0;
+    }
+    return 1;
+}
+
 static struct ops_misc_t *obj;
 struct ops_misc_t *get_misc_instance()
 {
@@ -167,6 +177,7 @@ struct ops_misc_t *get_misc_instance()
 		obj->show_all = show_all;
 		//obj->get_dbpath = get_dbpath;
 		//obj->get_dbtype = get_dbtype;
+		obj->is_file_exist = is_exist;
 		obj->get_logmask = get_logmask;
 		obj->syscmd = syscmd;
 		obj->get_macaddress_by_interface = get_macaddress_by_interface;

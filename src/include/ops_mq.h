@@ -17,6 +17,8 @@
 #define QUEUE_NAME_UDS_WWW	"udswww"
 #define QUEUE_NAME_SYSCMD	"syscmd"
 #define QUEUE_NAME_SYSINIT	"sysinit"
+#define QUEUE_NAME_RFBSERVER	"rfbserver"
+#define QUEUE_NAME_RFBCLIENT	"rfbclient"
 
 struct msg_t {
 	//struct msg_hdr_t hdr;

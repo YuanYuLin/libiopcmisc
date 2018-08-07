@@ -120,7 +120,6 @@ static uint8_t* get_array_string_by_index(json_reader_t* _array_reader, int inde
 	jobj_val = json_object_array_get_idx(reader, index);
 	if(jobj_val) {
 		val = (uint8_t*)json_object_get_string(jobj_val);
-		//val = (uint8_t*)json_object_get_string(jobj_val);
 	} else {
 		val = defval;
 	}

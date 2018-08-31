@@ -18,6 +18,8 @@ struct ops_misc_t {
 	int (*syscmd)(uint8_t* cmd);
 	uint8_t (*get_macaddress_by_interface)(uint8_t* interface, uint8_t* mac_address);
 	uint8_t (*get_ipaddress_by_interface)(uint8_t* interface, uint8_t* ip_address);
+	void (*create_dir_recursive)(const char *dir, mode_t mode);
+	uint32_t (*get_pid_by_path)(uint8_t *path);
 	//uint8_t (*is_file_exist)(uint8_t *path);
 };
 

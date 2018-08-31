@@ -101,8 +101,8 @@ static int get_logmask(uint8_t * val)
 
 static int syscmd(uint8_t* cmd)
 {
-    struct ops_log_t* log = get_log_instance();
-    log->debug(0x01, "syscmd : %s\n", cmd);
+    //struct ops_log_t* log = get_log_instance();
+    //log->debug(0x01, "syscmd : %s\n", cmd);
     system(cmd);
     return 0;
 }
@@ -158,6 +158,42 @@ static uint8_t get_ipaddress_by_interface(uint8_t* interface, uint8_t* ip_addres
 	return 0;
 }
 
+static uint32_t get_pid_by_path(uint8_t *path)
+{
+	uint32_t pid = 0;
+	FILE *fp = NULL;
+	fp = fopen(path, "r");
+        if(!fp) {
+		return 0;
+	}
+	fscanf(fp, "%d", &pid);
+	fclose(fp);
+
+	return pid;
+}
+
+static void create_dir_recursive(const char *dir, mode_t mode)
+{
+    #undef STR_LEN
+    #define STR_LEN	250
+    uint8_t tmp[STR_LEN];
+    uint8_t *p = NULL;
+    size_t len;
+
+    memset(&tmp[0], 0, STR_LEN);
+    snprintf(tmp, STR_LEN, "%s", dir);
+    len = strlen(tmp);
+    if(tmp[len - 1] == '/')
+        tmp[len - 1] = 0;
+    for(p = tmp + 1; *p; p++)
+        if(*p == '/') {
+            *p = 0;
+            mkdir(tmp, mode);
+            *p = '/';
+    }
+    mkdir(tmp, mode);
+}
+
 #if 0
 static uint8_t is_exist(uint8_t* path)
 {
@@ -183,6 +219,8 @@ struct ops_misc_t *get_misc_instance()
 		obj->syscmd = syscmd;
 		obj->get_macaddress_by_interface = get_macaddress_by_interface;
 		obj->get_ipaddress_by_interface = get_ipaddress_by_interface;
+		obj->create_dir_recursive = create_dir_recursive;
+		obj->get_pid_by_path = get_pid_by_path;
 	}
 
 	return obj;

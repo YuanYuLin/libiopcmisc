@@ -15,7 +15,7 @@ struct ops_misc_t {
 	//int (*get_dbpath) (uint8_t * val);
 	//int (*get_dbtype) (uint32_t * val);
 	int (*get_logmask) (uint8_t * val);
-	int (*syscmd)(uint8_t* cmd);
+	//int (*syscmd)(uint8_t cmdlen, uint8_t* cmd);
 	uint8_t (*get_macaddress_by_interface)(uint8_t* interface, uint8_t* mac_address);
 	uint8_t (*get_ipaddress_by_interface)(uint8_t* interface, uint8_t* ip_address);
 	void (*create_dir_recursive)(const char *dir, mode_t mode);
@@ -23,7 +23,7 @@ struct ops_misc_t {
 	//uint8_t (*is_file_exist)(uint8_t *path);
 };
 
-#define CMDLEN		0xff
+#define CMDLEN		128
 #define LUA_CFG		"/etc/lua/cfg.lua"
 
 struct ops_misc_t *get_misc_instance();

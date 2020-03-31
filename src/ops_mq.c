@@ -27,7 +27,7 @@ static int create(uint8_t * id)
 	}
 
 	if (mqd < 0) {
-		log->error(0x01, "MQ created ERROR :(%d) %s\n", errno, path);
+		log->error(0xFF, __FILE__, __func__, __LINE__, "MQ created ERROR :(%d) %s", errno, path);
 		return -1;
 	}
 	return mqd;
@@ -54,7 +54,7 @@ static int get_qmsg(mqd_t mqd, struct queue_msg_t* msg)
 
     msg_size = mq_receive(mqd, ptr, attr.mq_msgsize, NULL);
     if(msg_size < 0) {
-        log->error(0x01, "MQ_RCV:%d:%ld\n", errno, attr.mq_msgsize);
+        log->error(0xFF, __FILE__, __func__, __LINE__, "MQ_RCV:%d:%ld", errno, attr.mq_msgsize);
         return 0;
     }
 
@@ -73,7 +73,7 @@ static int get_syscmd(mqd_t mqd, struct syscmd_msg_t* msg)
 
     msg_size = mq_receive(mqd, ptr, attr.mq_msgsize, NULL);
     if(msg_size < 0) {
-        log->error(0x01, "MQ_RCV:%d:%ld\n", errno, attr.mq_msgsize);
+        log->error(0xFF, __FILE__, __func__, __LINE__, "MQ_RCV:%d:%ld\n", errno, attr.mq_msgsize);
         return 0;
     }
 
@@ -109,29 +109,33 @@ static void show_all()
 {
 }
 
-static int get_from(uint8_t * id, struct queue_msg_t *msg)
+static int get_from(uint8_t * id, struct queue_msg_t *_msg)
 //static int get_from(uint8_t * id, void *msg)
 {
+	struct queue_msg_t msg;
 	int ret = 0;
 	mqd_t mqd = create(id);
 	//if(strcmp(id, QUEUE_NAME_SYSCMD) == 0) {
 	//	ret = get_syscmd(mqd, msg);
 	//} else {
-	    ret = get_qmsg(mqd, msg);
+	    ret = get_qmsg(mqd, &msg);
 	//}
 	mq_close(mqd);
+	memcpy(_msg, &msg, sizeof(struct queue_msg_t));
 	return ret;
 }
 
-static int set_to(uint8_t * id, struct queue_msg_t *msg)
+static int set_to(uint8_t * id, struct queue_msg_t *_msg)
 //static int set_to(uint8_t * id, void *msg)
 {
+	struct queue_msg_t msg;
 	int ret = 0;
+	memcpy(&msg, _msg, sizeof(struct queue_msg_t));
 	mqd_t mqd = create(id);
 	//if(strcmp(id, QUEUE_NAME_SYSCMD) == 0) {
 	//	ret = set_syscmd(mqd, msg);
 	//} else {
-		ret = set_qmsg(mqd, msg);
+            ret = set_qmsg(mqd, &msg);
 	//}
 	mq_close(mqd);
 	return ret;

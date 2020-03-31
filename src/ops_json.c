@@ -39,10 +39,12 @@ static uint8_t* get_string(json_reader_t* _reader, uint8_t* key, uint8_t* defval
 	struct json_object* reader = (struct json_object*)_reader;
 	uint8_t* val = NULL;
 	struct json_object* jobj_val = NULL;
+	val = defval;
+	if(key == NULL) {
+		val = (uint8_t*)json_object_get_string(reader);
+	}
 	if(json_object_object_get_ex(reader, key, &jobj_val)) {
 		val = (uint8_t*)json_object_get_string(jobj_val);
-	} else {
-		val = defval;
 	}
 	return val;
 }
@@ -52,10 +54,12 @@ static int get_int(json_reader_t* _reader, uint8_t* key, int defval)
 	struct json_object* reader = (struct json_object*)_reader;
 	int val = 0;
 	struct json_object* jobj_val;
+	val = defval;
+	if(key == NULL) {
+		val = (int)json_object_get_int(reader);
+	}
 	if(json_object_object_get_ex(reader, key, &jobj_val)) {
 		val = (int)json_object_get_int(jobj_val);
-	} else {
-		val = defval;
 	}
 	return val;
 }
@@ -65,10 +69,12 @@ static uint8_t get_boolean(json_reader_t* _reader, uint8_t* key, uint8_t defval)
 	struct json_object* reader = (struct json_object*)_reader;
 	uint8_t val = 0;
 	struct json_object* jobj_val;
+	val = defval;
+	if(key == NULL) {
+		val = (int)json_object_get_boolean(reader);
+	}
 	if(json_object_object_get_ex(reader, key, &jobj_val)) {
 		val = (int)json_object_get_boolean(jobj_val);
-	} else {
-		val = defval;
 	}
 	return val;
 }
@@ -95,11 +101,11 @@ static void set_array(json_writer_t* _array_writer, json_writer_t* _writer)
 static json_reader_t* get_array(json_reader_t* _reader, uint8_t* _key, uint8_t* defval)
 {
 	struct json_object* reader = (struct json_object*)_reader;
-	struct ops_log_t* log = get_log_instance();
+	//struct ops_log_t* log = get_log_instance();
 	json_object_object_foreach(reader, key, val) {
-		log->debug(0x01, "%s, %d, %s, %s, %x\n", __func__, __LINE__, key, _key, json_object_get_type(val));
+		//log->debug(0x01, __FILE__, __func__, __LINE__, "%s, %d, %s, %d %x\n", key, strlen(key), _key, strlen(_key), json_object_get_type(val));
 		if( (strlen(_key) == strlen(key)) && (memcmp(_key, key, strlen(key)) == 0) ) {
-		log->debug(0x01, "%s, %d, %s, %s, %x\n", __func__, __LINE__, key, _key, json_object_get_type(val));
+		//log->debug(0x01, __FILE__, __func__, __LINE__, "%s, %s, %x\n", key, _key, json_object_get_type(val));
 			return val;
 		}
 	}
@@ -112,6 +118,16 @@ static int get_array_count(json_reader_t* _array_reader)
 	return json_object_array_length(reader);
 }
 
+static json_reader_t* get_array_object_by_index(json_reader_t* _array_reader, int index)
+{
+	struct json_object* reader = (struct json_object*)_array_reader;
+	struct json_object* jobj_val = NULL;
+	jobj_val = json_object_array_get_idx(reader, index);
+	if(jobj_val)
+		return jobj_val;
+	return NULL;
+}
+/*
 static uint8_t* get_array_string_by_index(json_reader_t* _array_reader, int index, uint8_t* defval)
 {
 	struct json_object* reader = (struct json_object*)_array_reader;
@@ -125,7 +141,7 @@ static uint8_t* get_array_string_by_index(json_reader_t* _array_reader, int inde
 	}
 	return val;
 }
-
+*/
 static void set_string(json_writer_t* _writer, uint8_t* key, uint8_t* val)
 {
 	struct json_object* writer = (struct json_object*)_writer;
@@ -184,7 +200,8 @@ struct ops_json_t *get_json_instance()
 		obj->get_json_array_count = get_array_count;
 		obj->set_json_array = set_array;
 		obj->get_json_array = get_array;
-		obj->get_json_array_string_by_index = get_array_string_by_index;
+		//obj->get_json_array_string_by_index = get_array_string_by_index;
+		obj->get_json_array_object_by_index = get_array_object_by_index;
 		obj->set_json_string = set_string;
 		obj->set_json_int = set_int;
 		obj->set_json_boolean = set_boolean;

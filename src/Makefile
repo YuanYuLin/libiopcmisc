@@ -10,7 +10,7 @@ CFLAGS +=
 LDFLAGS += -L$(SDKSTAGE)/lib/ 
 LDFLAGS += -L$(SDKSTAGE)/usr/lib/ 
 LDFLAGS += -lc -lpthread -ldl
-LDFLAGS += -ljson-c
+LDFLAGS += -ljson-c -lutil
 #LDFLAGS += -lluajit-5.1
 
 SRC = 

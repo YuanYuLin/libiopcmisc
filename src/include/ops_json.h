@@ -30,7 +30,8 @@ struct ops_json_t {
 	void (*set_json_boolean)(json_writer_t* writer, uint8_t* key, uint8_t val);
 	json_reader_t* (*get_json_array)(json_reader_t* _reader, uint8_t* key, uint8_t* defval);
 	int (*get_json_array_count)(json_reader_t* _array_reader);
-	uint8_t* (*get_json_array_string_by_index)(json_reader_t* _array_reader, int index, uint8_t* defval);
+	//uint8_t* (*get_json_array_string_by_index)(json_reader_t* _array_reader, int index, uint8_t* defval);
+	json_reader_t* (*get_json_array_object_by_index)(json_reader_t* _array_reader, int index);
 	uint32_t (*out_json_to_bytes)(json_writer_t* writer, uint8_t* data);
 	void (*debug_json)(json_reader_t* _reader);
 };

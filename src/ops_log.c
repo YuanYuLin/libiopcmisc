@@ -6,6 +6,9 @@
 
 #define LOG_PREFIX	"iopc"
 #define LOG_STR_LEN	1024
+#define FULLLOG_STR_LEN	(1024+512)
+#define LOG_MASKFILE_PATH	"/var/log/logmask_file"
+#define LOG_MASK_PATH	"/var/log/logmask"
 
 static void init(void)
 {
@@ -71,61 +74,132 @@ static void log(uint8_t mask, uint8_t level, const char *fmt, ...)
 	}
 }
 #endif
-static void _log(int level, uint8_t* log_str)
+static void _log(int level, const char* _file, const char* _func, uint32_t _line, uint8_t* log_str)
 {
+	uint8_t buf[FULLLOG_STR_LEN] = {0};
+	memset(&buf, 0, FULLLOG_STR_LEN);
+	snprintf(buf, FULLLOG_STR_LEN, "[%s - %s - %d]%s\n", _file, _func, _line, log_str);
+
 	openlog(LOG_PREFIX, LOG_PID, 0);
-	syslog(level, log_str);
+	syslog(level, buf);
 	closelog();
 }
 
-static void loginfo(uint8_t mask, const char *fmt, ...)
+/*
+ * mask 
+ *   0x00: reserved,
+ *   0xFF: reserved, force to log
+ */
+static uint8_t _compare_logmask(uint8_t ex_mask)
+{
+	uint8_t mask = 0x0;
+	FILE* fp;
+	uint8_t buf[LOG_STR_LEN] = {0};
+
+	if(ex_mask == 0xFF)
+		return 1;
+
+	fp = fopen(LOG_MASK_PATH, "r");
+	if(fp != NULL) {
+		memset(&buf, 0, LOG_STR_LEN);
+		if(fgets(buf, LOG_STR_LEN, fp) != NULL) {
+			mask =(uint8_t)strtoul(buf, NULL, 16);
+		}
+	}
+	if(fp != NULL)
+		fclose(fp);
+
+	/*
+	uint8_t log[LOG_STR_LEN] = {0};
+	memset(&log, 0, LOG_STR_LEN);
+	snprintf(log, LOG_STR_LEN, "mask(%s)[%x & %x]", LOG_MASK_PATH, mask, ex_mask);
+	_log(LOG_INFO, __FILE__, __func__, __LINE__, log);
+	*/
+
+	return (mask & ex_mask);
+}
+
+static uint8_t _compare_logmask_file(const char* file)
+{
+	int found = 0;
+	int str1_len = 0;
+	int str2_len = 0;
+	FILE* fp;
+	uint8_t mask = 0x80;
+	uint8_t buf[LOG_STR_LEN] = {0};
+	uint8_t log[LOG_STR_LEN] = {0};
+	memset(&buf, 0, LOG_STR_LEN);
+
+	fp = fopen(LOG_MASKFILE_PATH, "r");
+	if(fp != NULL) {
+		while(fgets(buf, LOG_STR_LEN, fp) != NULL) {
+			str1_len = strlen(buf) - 1;// TODO : Workaround
+			str2_len = strlen(file);
+			if(_compare_logmask(mask)) {
+				memset(&log, 0, LOG_STR_LEN);
+				snprintf(log, LOG_STR_LEN, "%s:%d - %s:%d", buf, str1_len, file, str2_len);
+				_log(LOG_INFO, __FILE__, __func__, __LINE__, log);
+			}
+			if((str1_len <= 0) || (str1_len > str2_len)) {
+				found = 0;
+			} else if(strncmp(buf, file, str1_len) == 0) {
+				found = 1;
+				break;
+			}
+			memset(&buf, 0, LOG_STR_LEN);
+		}
+	}
+
+	if(fp != NULL)
+		fclose(fp);
+
+	if(_compare_logmask(mask)) {
+		memset(&log, 0, LOG_STR_LEN);
+		snprintf(log, LOG_STR_LEN, "found: %d", found);
+		_log(LOG_INFO, __FILE__, __func__, __LINE__, log);
+	}
+	return found;
+}
+
+static void loginfo(uint8_t mask, const char* file, const char* func, uint32_t line, const char *fmt, ...)
 {
 	va_list arg;
-	uint8_t buf[LOG_STR_LEN];
-	uint8_t log_mask = 0;
-	struct ops_misc_t *misc = get_misc_instance();
-	misc->get_logmask(&log_mask);
+	uint8_t buf[LOG_STR_LEN]= {0};
 
-	if (log_mask & mask) {
+	if ((_compare_logmask(mask)) || (_compare_logmask_file(file))) {
 		memset(&buf, 0, LOG_STR_LEN);
 		va_start(arg, fmt);
 		vsnprintf(buf, LOG_STR_LEN, fmt, arg);
 		va_end(arg);
-		_log(LOG_INFO, buf);
+		_log(LOG_INFO, file, func, line, buf);
 	}
 }
 
-static void logdebug(uint8_t mask, const char *fmt, ...)
+static void logdebug(uint8_t mask, const char* file, const char* func, uint32_t line, const char *fmt, ...)
 {
 	va_list arg;
 	uint8_t buf[LOG_STR_LEN];
-	uint8_t log_mask = 0;
-	struct ops_misc_t *misc = get_misc_instance();
-	misc->get_logmask(&log_mask);
 
-	if (log_mask & mask) {
+	if ((_compare_logmask(mask)) || (_compare_logmask_file(file))) {
 		memset(&buf, 0, LOG_STR_LEN);
 		va_start(arg, fmt);
 		vsnprintf(buf, LOG_STR_LEN, fmt, arg);
 		va_end(arg);
-		_log(LOG_DEBUG, buf);
+		_log(LOG_DEBUG, file, func, line, buf);
 	}
 }
 
-static void logerror(uint8_t mask, const char *fmt, ...)
+static void logerror(uint8_t mask, const char* file, const char* func, uint32_t line, const char *fmt, ...)
 {
 	va_list arg;
 	uint8_t buf[LOG_STR_LEN];
-	uint8_t log_mask = 0;
-	struct ops_misc_t *misc = get_misc_instance();
-	misc->get_logmask(&log_mask);
 
-	if (log_mask & mask) {
+	if ((_compare_logmask(mask)) || (_compare_logmask_file(file))) {
 		memset(&buf, 0, LOG_STR_LEN);
 		va_start(arg, fmt);
 		vsnprintf(buf, LOG_STR_LEN, fmt, arg);
 		va_end(arg);
-		_log(LOG_ERR, buf);
+		_log(LOG_ERR, file, func, line, buf);
 	}
 }
 

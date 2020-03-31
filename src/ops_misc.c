@@ -98,7 +98,7 @@ static int get_logmask(uint8_t * val)
 	*val = 0xFF;
 	return ret;
 }
-
+/*
 static int syscmd(uint8_t* cmd)
 {
     //struct ops_log_t* log = get_log_instance();
@@ -106,6 +106,25 @@ static int syscmd(uint8_t* cmd)
     system(cmd);
     return 0;
 }
+*/
+/*
+static int syscmd(uint8_t cmdlen, uint8_t* cmd)
+{
+    struct ops_net_t* net = get_net_instance();
+    struct msg_t req;
+    struct msg_t res;
+    struct shell_cmd_t *req_cmd = (struct shell_cmd_t*)&req.data;
+    struct shell_cmd_t *res_cmd = (struct shell_cmd_t*)&res.data;
+    memset(&req, 0, sizeof(struct msg_t));
+    memset(&res, 0, sizeof(struct msg_t));
+    req.fn = 0xFF;
+    req.cmd = 0xFF;
+    req.data_size = sizeof(struct shell_cmd_t);
+    req_cmd->cmdlen = cmdlen;
+    memcpy(&req_cmd->cmd[0], cmd, cmdlen);
+    net->uds_client_send_and_recv(SOCKET_PATH_SHELL, &req, &res);
+}
+*/
 
 static uint8_t get_macaddress_by_interface(uint8_t* interface, uint8_t* mac_address)
 {
@@ -216,7 +235,7 @@ struct ops_misc_t *get_misc_instance()
 		//obj->get_dbtype = get_dbtype;
 		//obj->is_file_exist = is_exist;
 		obj->get_logmask = get_logmask;
-		obj->syscmd = syscmd;
+		//obj->syscmd = syscmd;
 		obj->get_macaddress_by_interface = get_macaddress_by_interface;
 		obj->get_ipaddress_by_interface = get_ipaddress_by_interface;
 		obj->create_dir_recursive = create_dir_recursive;
